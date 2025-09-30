@@ -33,7 +33,6 @@ export default function ProductsPage() {
   useEffect(() => {
     const fetchProducts = async () => {
       try {
-        // NOTE: Assurez-vous que votre API /api/products fonctionne correctement avec Firestore
         const res = await fetch("/api/products"); 
         if (!res.ok) throw new Error("Erreur lors du chargement des produits");
         const data = await res.json();
@@ -57,7 +56,6 @@ export default function ProductsPage() {
   const handleAddProduct = async (e) => {
     e.preventDefault();
     try {
-      // Requête POST vers votre API pour ajouter un produit
       const res = await fetch("/api/products", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -101,22 +99,22 @@ export default function ProductsPage() {
   if (error) return <p className="text-center mt-10 text-red-500">{error}</p>;
 
   return (
-    // J'ai enlevé la marge supérieure pour que le header puisse coller au top
     <div className="min-h-screen bg-gray-50"> 
       
-      {/* 🛠️ HEADER FIXE : La barre de navigation de la page 🛠️ */}
+      {/* HEADER FIXE */}
       <header className="
-        flex justify-center items-center h-16 /* Hauteur réduite pour un look plus compact */
-        bg-white  sticky top-0 z-20 
-        border-b border-gray-100 /* Ligne subtile pour séparer l'en-tête du contenu */
+        flex justify-center items-center h-16 
+        bg-white shadow-md sticky top-0 z-20 
+        border-b border-gray-100 
       ">
           
-          {/* 1. BOUTON D'AJOUT : Collé, bleu et avec texte blanc */}
+          {/* 1. BOUTON D'AJOUT : Responsive (Petit sur mobile, large sur desktop) */}
           <button
               onClick={() => setShowModal(true)}
               className={`
                   absolute top-0 left-0 h-full 
-                  px-4 
+                  px-4 /* Padding réduit sur mobile */
+                  md:px-6 /* Padding normal sur desktop */
                   py-0 
                   border-r border-b border-white/50
                   transition font-semibold whitespace-nowrap
@@ -128,7 +126,12 @@ export default function ProductsPage() {
                   rounded-none rounded-br-xl shadow-lg
               `}
           >
-              ➕ Ajouter un produit
+              {/* Le signe PLUS est toujours visible */}
+              ➕ 
+              {/* 🛠️ MODIFICATION CLÉ : Le texte est caché par défaut (mobile) et affiché à partir de 'md' 🛠️ */}
+              <span className="hidden md:inline ml-1">
+                  Ajouter un produit
+              </span>
           </button>
           
           {/* 2. TITRE PRINCIPAL (Centré) */}
@@ -139,6 +142,7 @@ export default function ProductsPage() {
           {/* Placeholder à droite */}
           <div className="absolute top-0 right-0 h-full w-20"></div>
       </header>
+      
       {/* ------------------------------------------------------------------------- */}
 
       
@@ -147,7 +151,6 @@ export default function ProductsPage() {
       
         {/* --- fenêtre modale --- */}
         {showModal && (
-          // 🛠️ MODIFICATION : Arrière-plan gris foncé semi-transparent
           <div className="fixed inset-0 bg-[rgba(0,0,0,0.75)] flex items-center justify-center z-50">
             <div className="bg-white p-6 rounded-xl shadow-lg w-full max-w-lg relative">
               <h2 className="text-xl font-semibold mb-4">Ajouter un produit</h2>
@@ -176,7 +179,7 @@ export default function ProductsPage() {
           </div>
         )}
 
-        {/* --- recherche --- */}
+        {/* --- recherche, filtres, et liste produits (inchangés) --- */}
         <div className="flex flex-col md:flex-row justify-center items-center gap-4 mb-6 pt-4">
           <input
             type="text"
@@ -187,7 +190,6 @@ export default function ProductsPage() {
           />
         </div>
 
-        {/* --- filtres --- */}
         <div className="flex flex-wrap justify-center gap-2 mb-8">
           {categories.map((cat) => (
             <button
@@ -204,7 +206,6 @@ export default function ProductsPage() {
           ))}
         </div>
 
-        {/* --- liste produits --- */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredProducts.map((product) => (
             <div
