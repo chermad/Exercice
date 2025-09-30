@@ -1,79 +1,71 @@
 "use client";
-import { useState } from "react";
-
-const products = [
-  // ---- ORDINATEURS ----
-  {
-    id: 1,
-    name: "MacBook Pro 16\"",
-    category: "ordinateurs",
-    price: 2499,
-    image: "https://images.unsplash.com/photo-1541807084-5c52b6b3adef?w=500&h=400&fit=crop",
-    description: "MacBook Pro avec puce M3 Pro, 16 GB RAM, 512 GB SSD.",
-    inStock: true,
-    rating: 4.8,
-    brand: "Apple",
-  },
-  {
-    id: 2,
-    name: "Dell XPS 13",
-    category: "ordinateurs",
-    price: 1299,
-    image: "https://images.unsplash.com/photo-1496181133206-80ce9b88a853?w=500&h=400&fit=crop",
-    description: "Ultrabook premium avec écran InfinityEdge, Intel Core i7.",
-    inStock: true,
-    rating: 4.6,
-    brand: "Dell",
-  },
-  {
-    id: 5,
-    name: "iPhone 15 Pro",
-    category: "smartphones",
-    price: 1199,
-    image: "https://images.unsplash.com/photo-1592750475338-74b7b21085ab?w=500&h=400&fit=crop",
-    description: "iPhone 15 Pro avec puce A17 Pro, caméra 48MP, design titane.",
-    inStock: true,
-    rating: 4.7,
-    brand: "Apple",
-  },
-  {
-    id: 9,
-    name: "Magic Mouse",
-    category: "accessoires",
-    price: 79,
-    image: "https://images.unsplash.com/photo-1527864550417-7fd91fc51a46?w=500&h=400&fit=crop",
-    description: "Souris Apple Magic Mouse avec surface Multi-Touch.",
-    inStock: true,
-    rating: 4.2,
-    brand: "Apple",
-  },
-  {
-    id: 13,
-    name: "AirPods Pro 2",
-    category: "audio",
-    price: 249,
-    image: "https://images.unsplash.com/photo-1606220945770-b5b6c2c55bf1?w=500&h=400&fit=crop",
-    description: "Écouteurs sans fil avec réduction de bruit active.",
-    inStock: true,
-    rating: 4.6,
-    brand: "Apple",
-  },
-  {
-    id: 17,
-    name: "PlayStation 5",
-    category: "gaming",
-    price: 499,
-    image: "https://images.unsplash.com/photo-1606813907291-d86efa9b94db?w=500&h=400&fit=crop",
-    description: "Console de nouvelle génération avec SSD ultra-rapide.",
-    inStock: false,
-    rating: 4.9,
-    brand: "Sony",
-  },
-];
+import { useState, useEffect } from "react";
 
 export default function ProductsPage() {
+  const [products, setProducts] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState("all");
+
+  // --- états pour le formulaire ---
+  const [showModal, setShowModal] = useState(false);
+  const [newProduct, setNewProduct] = useState({
+    name: "",
+    category: "",
+    price: "",
+    image: "",
+    description: "",
+    inStock: true,
+    rating: 0,
+    brand: "",
+  });
+
+  useEffect(() => {
+    const fetchProducts = async () => {
+      try {
+        const res = await fetch("/api/products");
+        if (!res.ok) throw new Error("Erreur lors du chargement des produits");
+        const data = await res.json();
+        setProducts(data);
+      } catch (err) {
+        setError(err.message);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchProducts();
+  }, []);
+
+  const handleAddProduct = async (e) => {
+    e.preventDefault();
+    try {
+      const res = await fetch("/api/products", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(newProduct),
+      });
+
+      if (!res.ok) throw new Error("Erreur lors de l’ajout du produit");
+      const data = await res.json();
+
+      setProducts([...products, { id: data.id, ...newProduct }]);
+      setShowModal(false); // ferme la fenêtre
+      setNewProduct({
+        name: "",
+        category: "",
+        price: "",
+        image: "",
+        description: "",
+        inStock: true,
+        rating: 0,
+        brand: "",
+      });
+    } catch (err) {
+      alert(err.message);
+    }
+  };
 
   const categories = ["all", "ordinateurs", "smartphones", "accessoires", "audio", "gaming"];
 
@@ -83,11 +75,104 @@ export default function ProductsPage() {
     return matchName && matchCategory;
   });
 
+  if (loading) return <p className="text-center mt-10">Chargement...</p>;
+  if (error) return <p className="text-center mt-10 text-red-500">{error}</p>;
+
   return (
     <div className="min-h-screen bg-gray-50 py-10 px-4">
       <h1 className="text-3xl font-bold text-center mb-8">Liste des Produits</h1>
 
-      {/* Barre de recherche */}
+      {/* --- bouton pour ouvrir la fenêtre --- */}
+      <div className="flex justify-center mb-6">
+        <button
+          onClick={() => setShowModal(true)}
+          className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700"
+        >
+          ➕ Ajouter un produit
+        </button>
+      </div>
+
+      {/* --- fenêtre modale --- */}
+      {showModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded-xl shadow-lg w-full max-w-lg relative">
+            <h2 className="text-xl font-semibold mb-4">Ajouter un produit</h2>
+            <form onSubmit={handleAddProduct} className="space-y-3">
+              <input
+                type="text"
+                placeholder="Nom du produit"
+                value={newProduct.name}
+                onChange={(e) => setNewProduct({ ...newProduct, name: e.target.value })}
+                className="border rounded-lg px-3 py-2 w-full"
+                required
+              />
+              <input
+                type="text"
+                placeholder="Catégorie"
+                value={newProduct.category}
+                onChange={(e) => setNewProduct({ ...newProduct, category: e.target.value })}
+                className="border rounded-lg px-3 py-2 w-full"
+                required
+              />
+              <input
+                type="number"
+                placeholder="Prix (€)"
+                value={newProduct.price}
+                onChange={(e) => setNewProduct({ ...newProduct, price: Number(e.target.value) })}
+                className="border rounded-lg px-3 py-2 w-full"
+                required
+              />
+              <input
+                type="text"
+                placeholder="Marque"
+                value={newProduct.brand}
+                onChange={(e) => setNewProduct({ ...newProduct, brand: e.target.value })}
+                className="border rounded-lg px-3 py-2 w-full"
+              />
+              <input
+                type="text"
+                placeholder="Lien de l’image"
+                value={newProduct.image}
+                onChange={(e) => setNewProduct({ ...newProduct, image: e.target.value })}
+                className="border rounded-lg px-3 py-2 w-full"
+              />
+              <textarea
+                placeholder="Description"
+                value={newProduct.description}
+                onChange={(e) => setNewProduct({ ...newProduct, description: e.target.value })}
+                className="border rounded-lg px-3 py-2 w-full"
+              />
+              <label className="flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  checked={newProduct.inStock}
+                  onChange={(e) => setNewProduct({ ...newProduct, inStock: e.target.checked })}
+                />
+                En stock
+              </label>
+
+              {/* boutons en bas */}
+              <div className="flex justify-end gap-3 mt-4">
+                <button
+                  type="button"
+                  onClick={() => setShowModal(false)}
+                  className="px-4 py-2 rounded-lg bg-gray-300 hover:bg-gray-400"
+                >
+                  Annuler
+                </button>
+                <button
+                  type="submit"
+                  className="px-4 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700"
+                >
+                  OK
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* --- recherche --- */}
       <div className="flex flex-col md:flex-row justify-center items-center gap-4 mb-6">
         <input
           type="text"
@@ -98,7 +183,7 @@ export default function ProductsPage() {
         />
       </div>
 
-      {/* Filtres par catégorie */}
+      {/* --- filtres --- */}
       <div className="flex flex-wrap justify-center gap-2 mb-8">
         {categories.map((cat) => (
           <button
@@ -115,7 +200,7 @@ export default function ProductsPage() {
         ))}
       </div>
 
-      {/* Liste des produits */}
+      {/* --- liste produits --- */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
         {filteredProducts.map((product) => (
           <div
@@ -141,13 +226,6 @@ export default function ProductsPage() {
           </div>
         ))}
       </div>
-
-      {/* Cas si aucun produit */}
-      {filteredProducts.length === 0 && (
-        <p className="text-center text-gray-500 mt-6">
-          Aucun produit trouvé pour cette recherche.
-        </p>
-      )}
     </div>
   );
 }
