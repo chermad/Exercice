@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import {
   collection,
   addDoc,
@@ -30,74 +30,109 @@ const formatTimestamp = (timestamp) => {
 };
 
 // 2. Composant enfant optimisé avec React.memo pour la performance
-// Dans votre composant NotesPage :
-
-// ... (code précédent) ...
-
-// 2. Composant enfant optimisé avec React.memo pour la performance
 const NoteItem = React.memo(({ note, currentTime, setEditingNote, setEditText, setNoteToDelete }) => {
     
+    // NOUVEL ÉTAT : Gère l'ouverture/fermeture du menu d'actions
+    const [showActions, setShowActions] = useState(false); 
+    const actionRef = useRef(null); // Référence pour détecter les clics en dehors
+
     // Logique pour vérifier si la note est nouvelle
     const isNew = (note) => {
         if (!note.createdAt?.seconds) return false;
         const creationTime = note.createdAt.seconds * 1000;
         return currentTime - creationTime <= NEW_MESSAGE_DURATION;
     };
-
     const isRecent = isNew(note);
 
+    // Logique pour fermer le menu lors d'un clic en dehors
+    useEffect(() => {
+        const handleClickOutside = (event) => {
+            // Vérifie si l'élément existe et si le clic n'est pas à l'intérieur
+            if (actionRef.current && !actionRef.current.contains(event.target)) {
+                setShowActions(false);
+            }
+        };
+
+        document.addEventListener("mousedown", handleClickOutside);
+        
+        return () => {
+            document.removeEventListener("mousedown", handleClickOutside);
+        };
+    }, [actionRef]);
+
+
     return (
-        <li className={`
+        <li 
+            ref={actionRef} // Attache la référence pour la détection de clic
+            className={`
             p-4 border rounded-lg shadow-md relative
-            transition duration-500 transform hover:shadow-xl hover:scale-[1.01]
+            transition duration-500 transform hover:shadow-xl hover:scale-[1.01] /* Effet au survol */
             ${isRecent ? 'bg-blue-50 border-blue-200' : 'bg-white border-gray-100'}
+            ${showActions ? 'z-20' : 'z-0'} /* 🚨 CORRECTION CLÉ : force la note active au-dessus de ses frères */
         `}>
-            {/* Affichage du badge si la note est nouvelle (inchangé) */}
+            {/* Affichage du badge si la note est nouvelle */}
             {isRecent && (
                 <span className="
                     absolute top-0 right-0 mt-[-10px] mr-[-10px] 
                     bg-blue-600 text-white text-xs font-bold 
                     px-2 py-0.5 rounded-full uppercase tracking-wider
-                    shadow-lg animate-bounce
+                    shadow-lg animate-bounce /* Animation subtile de rebond */
                 ">
                     Nouveau
                 </span>
             )}
             
-            {/* Contenu principal de la note */}
             <p className="text-gray-800 text-base mb-1 pr-12">{note.text}</p>
             
-            {/* 🚨 NOUVELLE BARRE D'ACTION (Verticale à droite) 🚨 */}
-            <div className="absolute top-4 right-4 flex flex-col space-y-2">
+            {/* NOUVEAU MENU CONTEXTUEL (Kebab Menu) */}
+            <div className="absolute top-4 right-4 z-10">
                 
-                {/* Bouton Modifier (Icône Crayon) */}
+                {/* 1. Le bouton à trois points (⋮) */}
                 <button
-                    onClick={() => {
-                        setEditingNote(note.id);
-                        setEditText(note.text);
-                    }}
+                    onClick={() => setShowActions(!showActions)}
                     className="
-                        bg-yellow-500 hover:bg-yellow-600 text-white 
+                        text-gray-500 hover:text-gray-800 
                         w-8 h-8 rounded-full flex items-center justify-center 
-                        text-lg shadow-md transition duration-300 transform hover:scale-110
+                        text-xl font-bold transition duration-300 transform hover:scale-110
                     "
-                    title="Modifier" // Ajout d'un tooltip pour l'accessibilité
+                    title="Actions"
                 >
-                    ✏️
+                    ⋮
                 </button>
 
-                {/* Bouton Supprimer (Icône Poubelle) */}
-                <button
-                    onClick={() => setNoteToDelete(note.id)}
-                    className="
-                        bg-red-600 hover:bg-red-700 text-white 
-                        w-8 h-8 rounded-full flex items-center justify-center 
-                        text-lg shadow-md transition duration-300 transform hover:scale-110
-                    "
-                    title="Supprimer" // Ajout d'un tooltip pour l'accessibilité
-                >
-                    🗑️
-                </button>
+                {/* 2. Affichage conditionnel des actions (Menu déroulant) */}
+                {showActions && (
+                    <div className="
+                        absolute right-0 top-full mt-2 
+                        bg-white border border-gray-200 rounded-lg shadow-xl 
+                        py-1 w-32 
+                        transform origin-top-right transition duration-200 ease-out 
+                        opacity-100 scale-100 animate-in fade-in zoom-in-50
+                    ">
+                        {/* Bouton Modifier */}
+                        <button
+                            onClick={() => {
+                                setShowActions(false); // Ferme le menu
+                                setEditingNote(note.id);
+                                setEditText(note.text);
+                            }}
+                            className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 w-full text-left"
+                        >
+                            ✏️ Modifier
+                        </button>
+
+                        {/* Bouton Supprimer */}
+                        <button
+                            onClick={() => {
+                                setShowActions(false); // Ferme le menu
+                                setNoteToDelete(note.id);
+                            }}
+                            className="flex items-center px-4 py-2 text-sm text-red-600 hover:bg-red-50 w-full text-left"
+                        >
+                            🗑️ Supprimer
+                        </button>
+                    </div>
+                )}
             </div>
 
 
@@ -112,13 +147,10 @@ const NoteItem = React.memo(({ note, currentTime, setEditingNote, setEditText, s
                 )}
             </div>
             
-            {/* Suppression de l'ancienne div flex avec les boutons de texte */}
         </li>
     );
 });
 NoteItem.displayName = 'NoteItem';
-
-// ... (Le reste du code de NotesPage est inchangé) ...
 
 
 // 3. Composant principal (NotesPage)
@@ -200,7 +232,8 @@ export default function NotesPage() {
                                         type="text"
                                         value={editText}
                                         onChange={(e) => setEditText(e.target.value)}
-                                        className="border p-3 w-full rounded-md focus:ring-2 focus:ring-green-500 transition"
+                                        // Correction de la couleur du texte saisi en mode édition
+                                        className="border p-3 w-full rounded-md focus:ring-2 focus:ring-green-500 transition text-gray-900"
                                     />
                                     <div className="flex gap-3 justify-end">
                                         <button
@@ -246,7 +279,7 @@ export default function NotesPage() {
                         value={newNote}
                         onChange={(e) => setNewNote(e.target.value)}
                         placeholder="Écrire une nouvelle note..."
-                        // 🚨 LES DEUX CORRECTIONS ICI : placeholder-gray-700 (pour l'indice) ET text-gray-900 (pour le texte saisi)
+                        // Corrections de la couleur du texte saisi et de l'indicateur
                         className="flex-1 border p-3 rounded-lg focus:ring-2 focus:ring-blue-500 transition duration-300 placeholder-gray-700 text-gray-900"
                         onKeyPress={(e) => e.key === 'Enter' && handleAddNote()}
                     />
