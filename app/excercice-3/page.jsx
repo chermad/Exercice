@@ -12,9 +12,10 @@ import {
   query,
   orderBy,
 } from "firebase/firestore";
-import { db } from "@/lib/firebase"; // Assurez-vous que ce chemin est correct
+// Assurez-vous que ce chemin est correct pour votre configuration Firebase
+import { db } from "@/lib/firebase"; 
 
-// 1. Constantes pour l'optimisation et la lisibilité
+// 1. Constantes pour la lisibilité
 const NEW_MESSAGE_DURATION = 5 * 60 * 1000; // 5 minutes en millisecondes
 
 const formatTimestamp = (timestamp) => {
@@ -28,9 +29,10 @@ const formatTimestamp = (timestamp) => {
   });
 };
 
-// 2. Composant enfant optimisé avec React.memo
+// 2. Composant enfant optimisé avec React.memo pour la performance
 const NoteItem = React.memo(({ note, currentTime, setEditingNote, setEditText, setNoteToDelete }) => {
     
+    // Logique pour vérifier si la note est nouvelle
     const isNew = (note) => {
         if (!note.createdAt?.seconds) return false;
         const creationTime = note.createdAt.seconds * 1000;
@@ -42,7 +44,7 @@ const NoteItem = React.memo(({ note, currentTime, setEditingNote, setEditText, s
     return (
         <li className={`
             p-4 border rounded-lg shadow-md relative
-            transition duration-500 transform hover:shadow-xl hover:scale-[1.01] /* 💡 Effet au survol */
+            transition duration-500 transform hover:shadow-xl hover:scale-[1.01] /* Effet au survol */
             ${isRecent ? 'bg-blue-50 border-blue-200' : 'bg-white border-gray-100'}
         `}>
             {/* Affichage du badge si la note est nouvelle */}
@@ -51,7 +53,7 @@ const NoteItem = React.memo(({ note, currentTime, setEditingNote, setEditText, s
                     absolute top-0 right-0 mt-[-10px] mr-[-10px] 
                     bg-blue-600 text-white text-xs font-bold 
                     px-2 py-0.5 rounded-full uppercase tracking-wider
-                    shadow-lg animate-bounce /* 💡 Effet de rebond pour les nouveaux messages */
+                    shadow-lg animate-bounce /* Animation subtile de rebond */
                 ">
                     Nouveau
                 </span>
@@ -95,13 +97,13 @@ NoteItem.displayName = 'NoteItem';
 
 // 3. Composant principal (NotesPage)
 export default function NotesPage() {
-    // ... (États et Timers inchangés) ...
     const [notes, setNotes] = useState([]);
     const [newNote, setNewNote] = useState("");
     const [editingNote, setEditingNote] = useState(null);
     const [editText, setEditText] = useState("");
     const [noteToDelete, setNoteToDelete] = useState(null);
     
+    // État pour la fonctionnalité "Nouveau" (mis à jour toutes les minutes)
     const [currentTime, setCurrentTime] = useState(Date.now()); 
 
     useEffect(() => {
@@ -111,6 +113,7 @@ export default function NotesPage() {
         return () => clearInterval(timer);
     }, []);
 
+    // Récupération en temps réel avec Firestore
     useEffect(() => {
         const q = query(collection(db, "notes"), orderBy("createdAt", "desc"));
         const unsubscribe = onSnapshot(q, (snapshot) => {
@@ -123,6 +126,7 @@ export default function NotesPage() {
         return () => unsubscribe();
     }, []);
 
+    // Fonctions CRUD
     const handleAddNote = useCallback(async () => {
         if (!newNote.trim()) return;
         await addDoc(collection(db, "notes"), {
@@ -163,7 +167,7 @@ export default function NotesPage() {
                     {notes.map((note) => (
                         <React.Fragment key={note.id}>
                             {editingNote === note.id ? (
-                                // Mode édition (Stylisé comme un modal in-place)
+                                // Mode édition
                                 <li className="p-4 border-2 border-green-500 rounded-lg shadow-xl bg-white space-y-3 transition duration-300">
                                     <h3 className="text-lg font-semibold text-green-600">Modification de la Note</h3>
                                     <input
@@ -205,11 +209,10 @@ export default function NotesPage() {
                 </ul>
             </div>
             
-            {/* Barre d'ajout de note (Fixed Bottom sur Mobile) */}
+            {/* Barre d'ajout de note (Fixed Bottom UNIVERSAL) */}
             <div className="
                 fixed bottom-0 left-0 right-0 bg-white 
                 p-4 border-t shadow-2xl z-10 
-                md:static md:p-0 md:shadow-none md:border-none md:mb-6
             ">
                 <div className="max-w-2xl mx-auto flex gap-3">
                     <input
@@ -217,23 +220,25 @@ export default function NotesPage() {
                         value={newNote}
                         onChange={(e) => setNewNote(e.target.value)}
                         placeholder="Écrire une nouvelle note..."
-                        className="flex-1 border p-3 rounded-lg focus:ring-2 focus:ring-blue-500 transition duration-300"
+                        className="flex-1 border p-3 rounded-lg focus:ring-2 focus:ring-blue-500 transition duration-300 placeholder-gray-700"
                         onKeyPress={(e) => e.key === 'Enter' && handleAddNote()}
                     />
                     <button
                         onClick={handleAddNote}
-                        className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-semibold transition duration-300 transform hover:scale-105 shadow-lg"
+                        // 🚨 MODIFICATION ICI : Classes de responsivité pour le bouton
+                        className="bg-blue-600 hover:bg-blue-700 text-white px-4 md:px-6 py-3 rounded-lg font-semibold transition duration-300 transform hover:scale-105 shadow-lg"
                     >
-                        Ajouter
+                        +
+                        {/* 🚨 Afficher le texte "Ajouter" uniquement sur les écrans > md */}
+                        <span className="hidden md:inline ml-1">Ajouter</span>
                     </button>
                 </div>
             </div>
 
 
-            {/* Modal de confirmation de suppression (avec un fond plus clair) */}
+            {/* Modal de confirmation de suppression */}
             {noteToDelete && (
                 <div className="fixed inset-0 bg-[rgba(0,0,0,0.4)] flex items-center justify-center z-50 p-4">
-                    {/* 💡 Animation : Transition d'échelle lors de l'apparition */}
                     <div className="bg-white p-6 rounded-xl shadow-2xl max-w-sm w-full transition duration-300 transform scale-100 animate-in fade-in zoom-in-50">
                         <p className="text-xl font-semibold mb-4 text-gray-800">Confirmer la suppression</p>
                         <p className="mb-6 text-gray-600">Êtes-vous sûr de vouloir supprimer cette note de manière définitive ?</p>
