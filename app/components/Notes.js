@@ -4,6 +4,7 @@ import React, { useEffect, useState, useRef } from "react";
 import { addNote, updateNote, deleteNote } from "@/lib/notesFunctions";
 import { auth, db } from "@/lib/firebase";
 import { collection, onSnapshot, query, orderBy, serverTimestamp } from "firebase/firestore";
+import Image from "next/image"; // ✅ Ajoutez cette ligne
 
 // Durée pendant laquelle une note est considérée comme "NOUVELLE"
 const NEW_MESSAGE_DURATION = 30 * 60 * 1000; // 30 minutes
@@ -132,10 +133,12 @@ export default function Notes() {
         <div className="flex items-center justify-between bg-cyan-50 p-3 rounded-lg">
           <div className="flex items-center gap-3">
             {user.photoURL && (
-              <img 
-                src={user.photoURL} 
-                alt="Avatar" 
-                className="w-8 h-8 rounded-full"
+              <Image // ✅ Remplace img par Image
+                src={user.photoURL}
+                alt="Avatar"
+                width={32}
+                height={32}
+                className="rounded-full"
               />
             )}
             <span className="text-cyan-700 font-medium">
@@ -151,8 +154,12 @@ export default function Notes() {
 
       {!user ? (
         <div className="text-center py-8 bg-white rounded-lg shadow-md">
-          <p className="text-gray-600 mb-4">Veuillez vous connecter pour voir et ajouter des notes</p>
-          <p className="text-sm text-gray-500">Utilisez le bouton "Connexion / Inscription" dans la navbar</p>
+          <p className="text-gray-600 mb-4">
+            Veuillez vous connecter pour voir et ajouter des notes
+          </p>
+          <p className="text-sm text-gray-500">
+            Utilisez le bouton &quot;Connexion / Inscription&quot; dans la navbar {/* ✅ Correction des guillemets */}
+          </p>
         </div>
       ) : notes.length === 0 ? (
         <p className="text-gray-600 text-center">Aucune note pour le moment.</p>
