@@ -127,11 +127,34 @@ export default function Notes() {
 
   return (
     <div className="max-w-2xl mx-auto p-4 space-y-4 pb-28">
+      {/* 🔹 Affichage de l'utilisateur connecté (optionnel) */}
+      {user && (
+        <div className="flex items-center justify-between bg-cyan-50 p-3 rounded-lg">
+          <div className="flex items-center gap-3">
+            {user.photoURL && (
+              <img 
+                src={user.photoURL} 
+                alt="Avatar" 
+                className="w-8 h-8 rounded-full"
+              />
+            )}
+            <span className="text-cyan-700 font-medium">
+              Connecté en tant que {user.email}
+            </span>
+          </div>
+        </div>
+      )}
+
       <h2 className="text-2xl font-bold mb-4 text-center text-cyan-700">
         Notes publiques
       </h2>
 
-      {notes.length === 0 ? (
+      {!user ? (
+        <div className="text-center py-8 bg-white rounded-lg shadow-md">
+          <p className="text-gray-600 mb-4">Veuillez vous connecter pour voir et ajouter des notes</p>
+          <p className="text-sm text-gray-500">Utilisez le bouton "Connexion / Inscription" dans la navbar</p>
+        </div>
+      ) : notes.length === 0 ? (
         <p className="text-gray-600 text-center">Aucune note pour le moment.</p>
       ) : (
         notes.map((note) => {
