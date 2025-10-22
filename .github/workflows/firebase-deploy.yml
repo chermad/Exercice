@@ -19,11 +19,14 @@ jobs:
           node-version: 20
 
       - name: Install dependencies
-        run: npm install
+        run: npm ci
 
-      - name: Deploy to Firebase
+      - name: Build project
+        run: npm run build
+
+            - name: Deploy to Firebase
         uses: w9jds/firebase-action@v2.2.0
         with:
           args: deploy --only hosting
         env:
-          FIREBASE_TOKEN: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+          FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
