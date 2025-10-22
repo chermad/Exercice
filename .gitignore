@@ -39,3 +39,6 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+# Ignorer les clés Firebase
+clet json github sur firebase/*.json
+
