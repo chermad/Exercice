@@ -1,4 +1,33 @@
-export default function Exercice1() {
+import { getServices } from '@/lib/strapi';
+
+// Fonction pour extraire le texte du Rich Text
+function extractTextFromRichText(richText) {
+  if (!richText) return '';
+  if (typeof richText === 'string') return richText;
+  
+  if (Array.isArray(richText)) {
+    return richText.map(block => {
+      if (block.children) {
+        return block.children.map(child => child.text || '').join('');
+      }
+      return '';
+    }).join(' ');
+  }
+  
+  return '';
+}
+
+export default async function Exercice1() {
+  let services = [];
+  
+  try {
+    const servicesData = await getServices();
+    services = servicesData.data || [];
+  } catch (error) {
+    console.error('Error fetching services:', error);
+    services = [];
+  }
+
   return (
     <div className="min-h-screen flex flex-col">
       {/* Header */}
@@ -28,17 +57,76 @@ export default function Exercice1() {
 
       {/* Portfolio Section */}
       <section className="max-w-7xl mx-auto px-4 py-16 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+        {/* Projet 1 */}
         <div className="bg-white shadow rounded-lg p-6">
-          <h3 className="font-bold text-lg mb-2">Projet 1</h3>
-          <p className="text-gray-600">Description brève du projet.</p>
+          <div className="flex items-center gap-3 mb-4">
+            <div className="text-2xl">{services[0]?.icon || "🚀"}</div>
+            <h3 className="font-bold text-lg">{services[0]?.title || "Développement Web"}</h3>
+          </div>
+          
+          <div className="mb-4 bg-gray-200 h-40 rounded-lg flex items-center justify-center">
+            {services[0]?.image?.url ? (
+              <img 
+                src={`${process.env.STRAPI_URL}${services[0].image.url}`}
+                alt={services[0]?.title || "Projet"}
+                className="h-full w-full object-cover rounded-lg"
+              />
+            ) : (
+              <span className="text-gray-500">Image du projet</span>
+            )}
+          </div>
+          
+          <p className="text-gray-600">
+            {extractTextFromRichText(services[0]?.description) || "Création de sites web modernes et responsives."}
+          </p>
         </div>
+
+        {/* Projet 2 */}
         <div className="bg-white shadow rounded-lg p-6">
-          <h3 className="font-bold text-lg mb-2">Projet 2</h3>
-          <p className="text-gray-600">Description brève du projet.</p>
+          <div className="flex items-center gap-3 mb-4">
+            <div className="text-2xl">{services[1]?.icon || "🌐"}</div>
+            <h3 className="font-bold text-lg">{services[1]?.title || "Design UI/UX"}</h3>
+          </div>
+          
+          <div className="mb-4 bg-gray-200 h-40 rounded-lg flex items-center justify-center">
+            {services[1]?.image?.url ? (
+              <img 
+                src={`${process.env.STRAPI_URL}${services[1].image.url}`}
+                alt={services[1]?.title || "Projet"}
+                className="h-full w-full object-cover rounded-lg"
+              />
+            ) : (
+              <span className="text-gray-500">Image du projet</span>
+            )}
+          </div>
+          
+          <p className="text-gray-600">
+            {extractTextFromRichText(services[1]?.description) || "Conception d'interfaces utilisateur intuitives et esthétiques."}
+          </p>
         </div>
+
+        {/* Projet 3 */}
         <div className="bg-white shadow rounded-lg p-6">
-          <h3 className="font-bold text-lg mb-2">Projet 3</h3>
-          <p className="text-gray-600">Description brève du projet.</p>
+          <div className="flex items-center gap-3 mb-4">
+            <div className="text-2xl">{services[2]?.icon || "💻"}</div>
+            <h3 className="font-bold text-lg">{services[2]?.title || "Applications Mobile"}</h3>
+          </div>
+          
+          <div className="mb-4 bg-gray-200 h-40 rounded-lg flex items-center justify-center">
+            {services[2]?.image?.url ? (
+              <img 
+                src={`${process.env.STRAPI_URL}${services[2].image.url}`}
+                alt={services[2]?.title || "Projet"}
+                className="h-full w-full object-cover rounded-lg"
+              />
+            ) : (
+              <span className="text-gray-500">Image du projet</span>
+            )}
+          </div>
+          
+          <p className="text-gray-600">
+            {extractTextFromRichText(services[2]?.description) || "Développement d'applications mobiles cross-platform."}
+          </p>
         </div>
       </section>
 
