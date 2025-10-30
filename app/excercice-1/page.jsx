@@ -1,6 +1,6 @@
 import { getServices } from '@/lib/strapi';
 
-// Fonction pour extraire le texte du Rich Text
+// Fonction pour extraire le texte du Rich Text (identique)
 function extractTextFromRichText(richText) {
   if (!richText) return '';
   if (typeof richText === 'string') return richText;
@@ -17,16 +17,29 @@ function extractTextFromRichText(richText) {
   return '';
 }
 
-export default async function Exercice1() {
-  let services = [];
-  
+// ⚠️ NOUVEAU : Fonction SSR qui s'exécute à chaque visite
+export async function getServerSideProps() {
   try {
     const servicesData = await getServices();
-    services = servicesData.data || [];
+    return {
+      props: {
+        services: servicesData.data || [] // Garde le fallback
+      }
+    };
   } catch (error) {
     console.error('Error fetching services:', error);
-    services = [];
+    return {
+      props: {
+        services: [] // Fallback en cas d'erreur
+      }
+    };
   }
+}
+
+// ⚠️ MODIFIÉ : Le composant reçoit maintenant les services via props
+export default function Exercice1({ services }) {
+  // SUPPRIMÉ : l'appel à getServices() et la gestion d'erreur interne
+  // services vient maintenant des props SSR
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -67,7 +80,7 @@ export default async function Exercice1() {
           <div className="mb-4 bg-gray-200 h-40 rounded-lg flex items-center justify-center">
             {services[0]?.image?.url ? (
               <img 
-                src={`${process.env.STRAPI_URL}${services[0].image.url}`}
+                src={`${process.env.NEXT_PUBLIC_STRAPI_URL}${services[0].image.url}`}
                 alt={services[0]?.title || "Projet"}
                 className="h-full w-full object-cover rounded-lg"
               />
@@ -91,7 +104,7 @@ export default async function Exercice1() {
           <div className="mb-4 bg-gray-200 h-40 rounded-lg flex items-center justify-center">
             {services[1]?.image?.url ? (
               <img 
-                src={`${process.env.STRAPI_URL}${services[1].image.url}`}
+                src={`${process.env.NEXT_PUBLIC_STRAPI_URL}${services[1].image.url}`}
                 alt={services[1]?.title || "Projet"}
                 className="h-full w-full object-cover rounded-lg"
               />
@@ -115,7 +128,7 @@ export default async function Exercice1() {
           <div className="mb-4 bg-gray-200 h-40 rounded-lg flex items-center justify-center">
             {services[2]?.image?.url ? (
               <img 
-                src={`${process.env.STRAPI_URL}${services[2].image.url}`}
+                src={`${process.env.NEXT_PUBLIC_STRAPI_URL}${services[2].image.url}`}
                 alt={services[2]?.title || "Projet"}
                 className="h-full w-full object-cover rounded-lg"
               />
